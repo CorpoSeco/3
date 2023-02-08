@@ -1,0 +1,101 @@
+From 18a5ed84f260496f367ea3559071a1036433e80a Mon Sep 17 00:00:00 2001
+From: TheAtt1la <alittauwu@gmail.com>
+Date: Wed, 8 Feb 2023 05:22:44 +0100
+Subject: [PATCH 1/3] Revert udfps: Restore illumination dot for global hbm
+
+---
+ packages/SystemUI/res/layout/udfps_view.xml   |  6 ----
+ .../android/systemui/biometrics/UdfpsView.kt  | 28 ++-----------------
+ 2 files changed, 2 insertions(+), 32 deletions(-)
+
+diff --git a/packages/SystemUI/res/layout/udfps_view.xml b/packages/SystemUI/res/layout/udfps_view.xml
+index 0fcbfa161ddf..257d238f5c54 100644
+--- a/packages/SystemUI/res/layout/udfps_view.xml
++++ b/packages/SystemUI/res/layout/udfps_view.xml
+@@ -28,10 +28,4 @@
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"/>
+ 
+-    <com.android.systemui.biometrics.UdfpsSurfaceView
+-        android:id="@+id/hbm_view"
+-        android:layout_width="match_parent"
+-        android:layout_height="match_parent"
+-        android:visibility="invisible"/>
+-
+ </com.android.systemui.biometrics.UdfpsView>
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt
+index 5f0c53c9b7bb..245c2252d57b 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt
+@@ -24,7 +24,6 @@ import android.graphics.RectF
+ import android.util.AttributeSet
+ import android.util.Log
+ import android.view.MotionEvent
+-import android.view.Surface
+ import android.widget.FrameLayout
+ import com.android.systemui.R
+ import com.android.systemui.doze.DozeReceiver
+@@ -61,9 +60,6 @@ class UdfpsView(
+         com.android.internal.R.integer.config_udfps_illumination_transition_ms
+     ).toLong()
+ 
+-    // Only used for UdfpsHbmTypes.GLOBAL_HBM.
+-    private var ghbmView: UdfpsSurfaceView? = null
+-
+     /** View controller (can be different for enrollment, BiometricPrompt, Keyguard, etc.). */
+     var animationViewController: UdfpsAnimationViewController<*>? = null
+ 
+@@ -93,10 +89,6 @@ class UdfpsView(
+         return (animationViewController == null || !animationViewController!!.shouldPauseAuth())
+     }
+ 
+-    override fun onFinishInflate() {
+-        ghbmView = findViewById(R.id.hbm_view)
+-    }
+-
+     override fun dozeTimeTick() {
+         animationViewController?.dozeTimeTick()
+     }
+@@ -161,25 +153,13 @@ class UdfpsView(
+     override fun startIllumination(onIlluminatedRunnable: Runnable?) {
+         isIlluminationRequested = true
+         animationViewController?.onIlluminationStarting()
+-        val gView = ghbmView
+-        if (gView != null) {
+-            gView.setGhbmIlluminationListener(this::doIlluminate)
+-            gView.visibility = VISIBLE
+-            gView.startGhbmIllumination(onIlluminatedRunnable)
+-        } else {
+-            doIlluminate(null /* surface */, onIlluminatedRunnable)
+-        }
++        doIlluminate(onIlluminatedRunnable)
+     }
+ 
+-    private fun doIlluminate(surface: Surface?, onIlluminatedRunnable: Runnable?) {
+-        if (ghbmView != null && surface == null) {
+-            Log.e(TAG, "doIlluminate | surface must be non-null for GHBM")
+-        }
+-
++    private fun doIlluminate(onIlluminatedRunnable: Runnable?) {
+         // TODO(b/231335067): enableHbm with halControlsIllumination=true shouldn't make sense.
+         // This only makes sense now because vendor code may rely on the side effects of enableHbm.
+         hbmProvider?.enableHbm(halControlsIllumination) {
+-            ghbmView?.drawIlluminationDot(sensorRect)
+             if (onIlluminatedRunnable != null) {
+                 if (halControlsIllumination) {
+                     onIlluminatedRunnable.run()
+@@ -197,10 +177,6 @@ class UdfpsView(
+     override fun stopIllumination() {
+         isIlluminationRequested = false
+         animationViewController?.onIlluminationStopped()
+-        ghbmView?.let { view ->
+-            view.setGhbmIlluminationListener(null)
+-            view.visibility = INVISIBLE
+-        }
+         hbmProvider?.disableHbm(null /* onHbmDisabled */)
+     }
+ }
+-- 
+2.34.1
+
+
