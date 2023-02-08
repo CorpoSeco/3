@@ -1,0 +1,27 @@
+From 05f07404b39450a2a27ce83d8301641872c80c33 Mon Sep 17 00:00:00 2001
+From: TheAtt1la <alittauwu@gmail.com>
+Date: Wed, 8 Feb 2023 05:38:16 +0100
+Subject: [PATCH 3/3] Revert AuthService: Add support for workaround side fps
+ props 2
+
+---
+ .../sensors/fingerprint/aidl/FingerprintProvider.java           | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
+index 0dcb86396c53..f16af78364a2 100644
+--- a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
++++ b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
+@@ -721,7 +721,7 @@ public class FingerprintProvider implements IBinder.DeathRecipient, ServiceProvi
+     }
+ 
+     @Nullable
+-    private static SensorLocationInternal parseSensorLocation(@Nullable TypedArray array) {
++    private SensorLocationInternal parseSensorLocation(@Nullable TypedArray array) {
+         if (array == null) {
+             return null;
+         }
+-- 
+2.34.1
+
+
